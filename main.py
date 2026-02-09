@@ -13,6 +13,10 @@
 
   # 전략 비교
   python main.py compare --code 005930
+
+  # 멀티팩터 종목 스크리닝
+  python main.py screen
+  python main.py screen --top 20 --market kospi
 """
 
 import argparse
@@ -133,6 +137,40 @@ def cmd_backtest(args):
     plot_backtest_result(result, chart_path)
 
 
+def cmd_screen(args):
+    """멀티팩터 종목 스크리닝"""
+    if not kis_config.validate():
+        sys.exit(1)
+
+    from screener import StockScreener
+
+    # 시장 코드 변환
+    market_map = {
+        "all": "0000",
+        "kospi": "0001",
+        "kosdaq": "1001",
+        "kospi200": "2001",
+    }
+    market = market_map.get(args.market, args.market)
+
+    screener = StockScreener()
+    results = screener.run(
+        top_n=args.top,
+        market=market,
+        tech_weight=args.tech_weight,
+        fund_weight=args.fund_weight,
+    )
+
+    if not results:
+        print("\n[결과] 스크리닝 결과가 없습니다.")
+        sys.exit(0)
+
+    # 종목 코드 목록 출력
+    codes = [r["code"] for r in results]
+    print(f"\n[종목 코드] {', '.join(codes)}")
+    print(f"  → 자동매매 연동: autotrading_config.stock_codes에 설정 가능")
+
+
 def cmd_compare(args):
     """모든 전략 비교"""
     store = DataStore()
@@ -200,6 +238,18 @@ def main():
     sub_cmp = subparsers.add_parser("compare", help="전략 비교")
     sub_cmp.add_argument("--code", required=True, help="종목코드")
 
+    # screen
+    sub_screen = subparsers.add_parser("screen", help="멀티팩터 종목 스크리닝")
+    sub_screen.add_argument("--top", type=int, default=10, help="상위 N개 종목 (기본: 10)")
+    sub_screen.add_argument(
+        "--market",
+        default="all",
+        choices=["all", "kospi", "kosdaq", "kospi200"],
+        help="대상 시장 (기본: all)",
+    )
+    sub_screen.add_argument("--tech-weight", type=float, default=0.5, help="기술적 팩터 가중치 (기본: 0.5)")
+    sub_screen.add_argument("--fund-weight", type=float, default=0.5, help="펀더멘탈 팩터 가중치 (기본: 0.5)")
+
     args = parser.parse_args()
 
     if args.command == "demo":
@@ -210,6 +260,8 @@ def main():
         cmd_backtest(args)
     elif args.command == "compare":
         cmd_compare(args)
+    elif args.command == "screen":
+        cmd_screen(args)
     else:
         parser.print_help()
 

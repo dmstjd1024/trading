@@ -5,7 +5,10 @@
 백테스팅 엔진은 각 봉마다 on_candle()을 호출하여 시그널을 받습니다.
 """
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
+from typing import Optional, Tuple
 
 import pandas as pd
 
@@ -24,7 +27,7 @@ class Strategy(ABC):
     """
 
     def __init__(self):
-        self._data: pd.DataFrame | None = None
+        self._data: Optional[pd.DataFrame] = None
 
     @property
     @abstractmethod
@@ -48,7 +51,7 @@ class Strategy(ABC):
         row: pd.Series,
         position: Position,
         data: pd.DataFrame,
-    ) -> tuple[Signal, float]:
+    ) -> Tuple[Signal, float]:
         """
         각 봉(캔들)마다 호출되어 매매 시그널을 반환합니다.
 

@@ -5,9 +5,12 @@
 API 호출을 최소화하기 위해 이미 저장된 데이터는 스킵합니다.
 """
 
+from __future__ import annotations
+
 import os
 import sqlite3
 from datetime import datetime
+from typing import Optional, List
 
 import pandas as pd
 
@@ -18,7 +21,7 @@ from models import Candle
 class DataStore:
     """SQLite 기반 주가 데이터 저장소"""
 
-    def __init__(self, db_path: str | None = None):
+    def __init__(self, db_path: Optional[str] = None):
         self.db_path = db_path or data_config.db_path
         os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
         self._init_db()
@@ -43,7 +46,7 @@ class DataStore:
                 ON daily_candles (stock_code, date)
             """)
 
-    def save_candles(self, stock_code: str, candles: list[Candle]) -> int:
+    def save_candles(self, stock_code: str, candles: List[Candle]) -> int:
         """
         봉 데이터 저장 (중복 시 업데이트)
 
@@ -72,8 +75,8 @@ class DataStore:
     def load_dataframe(
         self,
         stock_code: str,
-        start_date: str | None = None,
-        end_date: str | None = None,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
     ) -> pd.DataFrame:
         """
         DataFrame으로 로드
@@ -108,7 +111,7 @@ class DataStore:
         print(f"[로드] {stock_code} {len(df)}개 레코드 로드")
         return df
 
-    def load_candles(self, stock_code: str) -> list[Candle]:
+    def load_candles(self, stock_code: str) -> List[Candle]:
         """Candle 리스트로 로드"""
         df = self.load_dataframe(stock_code)
         return [
@@ -123,7 +126,7 @@ class DataStore:
             for idx, row in df.iterrows()
         ]
 
-    def get_latest_date(self, stock_code: str) -> str | None:
+    def get_latest_date(self, stock_code: str) -> Optional[str]:
         """해당 종목의 가장 최근 저장 날짜"""
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.execute(
@@ -133,7 +136,7 @@ class DataStore:
             result = cursor.fetchone()
             return result[0] if result and result[0] else None
 
-    def list_stocks(self) -> list[str]:
+    def list_stocks(self) -> List[str]:
         """저장된 종목코드 목록"""
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.execute(

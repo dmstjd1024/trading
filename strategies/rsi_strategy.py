@@ -5,10 +5,14 @@ RSI (Relative Strength Index) 전략
 - RSI가 과매수 구간(70 이상) 진입 후 하락 → 매도
 """
 
+from __future__ import annotations
+
+from typing import Tuple
+
 import pandas as pd
 
 from models import Signal, Position
-from strategies.base import Strategy
+from .base import Strategy
 
 
 class RSIStrategy(Strategy):
@@ -47,7 +51,7 @@ class RSIStrategy(Strategy):
         row: pd.Series,
         position: Position,
         data: pd.DataFrame,
-    ) -> tuple[Signal, float]:
+    ) -> Tuple[Signal, float]:
         if index < self.period + 1:
             return Signal.HOLD, 0.0
 

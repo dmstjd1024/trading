@@ -3,9 +3,12 @@
 트레이딩 시스템에서 사용하는 핵심 데이터 구조
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+from typing import List, Tuple
 
 
 class Signal(Enum):
@@ -92,8 +95,8 @@ class BacktestResult:
     period: str
     initial_capital: float
     final_capital: float
-    trades: list[Trade] = field(default_factory=list)
-    daily_equity: list[tuple[datetime, float]] = field(default_factory=list)
+    trades: List[Trade] = field(default_factory=list)
+    daily_equity: List[Tuple[datetime, float]] = field(default_factory=list)
 
     @property
     def total_return(self) -> float:
@@ -139,3 +142,50 @@ class BacktestResult:
             f"{'='*50}",
         ]
         return "\n".join(lines)
+
+
+@dataclass
+class TradingLog:
+    """자동매매 로그"""
+    timestamp: datetime
+    stock_code: str
+    strategy_name: str
+    signal: Signal
+    price: float
+    quantity: int
+    status: str  # "executed", "failed", "skipped"
+    message: str = ""
+
+    def to_dict(self) -> dict:
+        return {
+            "timestamp": self.timestamp.isoformat(),
+            "stock_code": self.stock_code,
+            "strategy_name": self.strategy_name,
+            "signal": self.signal.value,
+            "price": self.price,
+            "quantity": self.quantity,
+            "status": self.status,
+            "message": self.message,
+        }
+
+
+@dataclass
+class AccountBalance:
+    """계좌 잔고"""
+    total_balance: float  # 총 평가금액
+    cash_balance: float   # 현금 잔고
+    stock_balance: float  # 주식 평가금액
+    profit_loss: float    # 평가손익
+    profit_loss_rate: float  # 수익률 (%)
+
+
+@dataclass
+class Holding:
+    """보유 종목"""
+    stock_code: str
+    stock_name: str
+    quantity: int
+    avg_price: float
+    current_price: float
+    profit_loss: float
+    profit_loss_rate: float

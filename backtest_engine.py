@@ -5,7 +5,10 @@
 수수료, 슬리피지, 거래세를 반영합니다.
 """
 
+from __future__ import annotations
+
 import math
+from typing import Optional, List, Tuple
 
 import pandas as pd
 
@@ -17,7 +20,7 @@ from strategies.base import Strategy
 class BacktestEngine:
     """백테스팅 엔진"""
 
-    def __init__(self, config: BacktestConfig | None = None):
+    def __init__(self, config: Optional[BacktestConfig] = None):
         self.config = config or backtest_config
 
     def run(
@@ -49,18 +52,55 @@ class BacktestEngine:
         # 상태 변수
         capital = self.config.initial_capital
         position = Position(code=stock_code)
-        trades: list[Trade] = []
-        daily_equity: list[tuple] = []
+        trades: List[Trade] = []
+        daily_equity: List[Tuple] = []
 
         print(f"\n[백테스트] {strategy.name} 시작")
         print(f"  종목: {stock_code}")
         print(f"  기간: {df.index[0].strftime('%Y-%m-%d')} ~ {df.index[-1].strftime('%Y-%m-%d')}")
         print(f"  초기자본: {capital:,.0f}원")
+        if self.config.stop_loss_rate > 0:
+            print(f"  손절선: -{self.config.stop_loss_rate*100:.1f}%")
+        if self.config.take_profit_rate > 0:
+            print(f"  익절선: +{self.config.take_profit_rate*100:.1f}%")
         print(f"  데이터: {len(df)}봉\n")
 
         for i in range(len(df)):
             row = df.iloc[i]
             current_date = df.index[i]
+            current_price = row["close"]
+
+            # 손절/익절 체크 (포지션이 있을 때만)
+            if position.is_open:
+                pnl_pct = (current_price / position.avg_price - 1)
+
+                # 손절 체크
+                if self.config.stop_loss_rate > 0 and pnl_pct <= -self.config.stop_loss_rate:
+                    trade = self._execute_sell(
+                        date=current_date,
+                        price=current_price,
+                        position=position,
+                        ratio=1.0,
+                        reason="손절",
+                    )
+                    if trade:
+                        capital += trade.total_cost
+                        trades.append(trade)
+                    continue
+
+                # 익절 체크
+                if self.config.take_profit_rate > 0 and pnl_pct >= self.config.take_profit_rate:
+                    trade = self._execute_sell(
+                        date=current_date,
+                        price=current_price,
+                        position=position,
+                        ratio=1.0,
+                        reason="익절",
+                    )
+                    if trade:
+                        capital += trade.total_cost
+                        trades.append(trade)
+                    continue
 
             # 전략에 시그널 요청
             signal, ratio = strategy.on_candle(i, row, position, df)
@@ -124,7 +164,7 @@ class BacktestEngine:
         capital: float,
         ratio: float,
         position: Position,
-    ) -> Trade | None:
+    ) -> Optional[Trade]:
         """매수 실행"""
         # 슬리피지 적용
         exec_price = price * (1 + self.config.slippage_rate)
@@ -160,7 +200,8 @@ class BacktestEngine:
         price: float,
         position: Position,
         ratio: float,
-    ) -> Trade | None:
+        reason: str = "",
+    ) -> Optional[Trade]:
         """매도 실행"""
         # 슬리피지 적용
         exec_price = price * (1 - self.config.slippage_rate)
@@ -191,5 +232,6 @@ class BacktestEngine:
         )
 
         emoji = "🟢" if pnl > 0 else "🔴"
-        print(f"  📉 매도 {date.strftime('%Y-%m-%d')} | {exec_price:,.0f}원 × {quantity:,}주 | {emoji} {pnl_pct:+.2f}%")
+        reason_str = f" [{reason}]" if reason else ""
+        print(f"  📉 매도 {date.strftime('%Y-%m-%d')} | {exec_price:,.0f}원 × {quantity:,}주 | {emoji} {pnl_pct:+.2f}%{reason_str}")
         return trade

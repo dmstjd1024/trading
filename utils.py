@@ -4,14 +4,17 @@
 백테스팅 결과 시각화, 지표 계산 헬퍼 등
 """
 
+from __future__ import annotations
+
 from datetime import datetime
+from typing import Optional, List, Tuple
 
 import pandas as pd
 
 from models import BacktestResult, Signal
 
 
-def plot_backtest_result(result: BacktestResult, save_path: str | None = None) -> None:
+def plot_backtest_result(result: BacktestResult, save_path: Optional[str] = None) -> None:
     """
     백테스팅 결과를 차트로 시각화
 
@@ -89,7 +92,7 @@ def plot_backtest_result(result: BacktestResult, save_path: str | None = None) -
     plt.close()
 
 
-def calculate_max_drawdown(daily_equity: list[tuple[datetime, float]]) -> float:
+def calculate_max_drawdown(daily_equity: List[Tuple[datetime, float]]) -> float:
     """최대 낙폭(MDD) 계산 (%)"""
     if not daily_equity:
         return 0.0
@@ -108,7 +111,7 @@ def calculate_max_drawdown(daily_equity: list[tuple[datetime, float]]) -> float:
 
 
 def calculate_sharpe_ratio(
-    daily_equity: list[tuple[datetime, float]],
+    daily_equity: List[Tuple[datetime, float]],
     risk_free_rate: float = 0.035,  # 한국 무위험 수익률 약 3.5%
 ) -> float:
     """샤프 비율 계산 (연간화)"""

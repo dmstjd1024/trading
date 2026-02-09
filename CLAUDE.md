@@ -1,3 +1,8 @@
+---
+description: 
+alwaysApply: true
+---
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
@@ -42,9 +47,13 @@ python main.py compare --code 005930
 - `BacktestConfig` - initial capital, commission (0.015%), slippage (0.1%), tax (0.18%)
 - `is_paper=True` selects paper trading API endpoint
 
-## Known Issue
+## Project Structure
 
-The codebase expects a `strategies/` package structure (as documented in README.md) but files are currently in root. The imports in main.py (`from strategies import ...`) and strategy files (`from strategies.base import Strategy`) will fail. To fix: create `strategies/` directory with `__init__.py` that exports `STRATEGIES` dict and move base.py, golden_cross.py, rsi_strategy.py there.
+The codebase uses a `strategies/` package structure as documented in README.md:
+- `strategies/__init__.py` - exports `STRATEGIES` dict and strategy classes
+- `strategies/base.py` - abstract Strategy class
+- `strategies/golden_cross.py` - Golden Cross strategy
+- `strategies/rsi_strategy.py` - RSI strategy
 
 ## Adding New Strategies
 

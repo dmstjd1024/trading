@@ -1,0 +1,21 @@
+# 환경변수 / 시크릿
+.env
+secret.json
+.token_cache.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+
+# 데이터
+data/
+
+# 로그
+logs/

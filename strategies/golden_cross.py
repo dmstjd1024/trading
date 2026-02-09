@@ -5,10 +5,14 @@
 - 단기 이동평균선이 장기 이동평균선을 하향 돌파 → 매도
 """
 
+from __future__ import annotations
+
+from typing import Tuple
+
 import pandas as pd
 
 from models import Signal, Position
-from strategies.base import Strategy
+from .base import Strategy
 
 
 class GoldenCrossStrategy(Strategy):
@@ -34,7 +38,7 @@ class GoldenCrossStrategy(Strategy):
         row: pd.Series,
         position: Position,
         data: pd.DataFrame,
-    ) -> tuple[Signal, float]:
+    ) -> Tuple[Signal, float]:
         # 이동평균선이 계산되지 않은 초기 구간은 HOLD
         if index < self.long_window:
             return Signal.HOLD, 0.0
